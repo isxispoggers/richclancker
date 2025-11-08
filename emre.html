@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>emre</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face{font-family:"MacsMinecraft";src:url('fonts/macsminecraft.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}
+
+    :root{
+      --bg:#050507;
+      --card:#0b0b0d;
+      --muted:#9aa0a6;
+      --accent:#e9eef6;
+      --glass-border: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:Poppins, Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;color:var(--accent);-webkit-font-smoothing:antialiased;overflow:hidden}
+
+    /* Tiny slow snow */
+    .snowflakes {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .flake {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      0% { transform: translate(0, 0); opacity: 0.4; }
+      50% { opacity: 0.6; }
+      100% { transform: translate(var(--x-shift), var(--y-shift)); opacity: 0.4; }
+    }
+
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px;z-index:1;position:relative}
+
+    .card{width:520px;max-width:calc(100% - 40px);background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border-radius:14px;border:1px solid var(--glass-border);padding:22px;box-shadow:0 12px 40px rgba(0,0,0,0.6);backdrop-filter: blur(8px);opacity:0;transform:translateY(10px);transition:opacity .55s cubic-bezier(.2,.9,.2,1), transform .55s cubic-bezier(.2,.9,.2,1);z-index:2}
+    .card.show{opacity:1;transform:none}
+
+    .header{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 0 6px rgba(255,255,255,0.04);
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .name-wrap{display:flex;flex-direction:column}
+    .name{font-family:MacsMinecraft, 'Press Start 2P', monospace;font-size:30px;color:var(--accent);letter-spacing:1px}
+    .role{font-size:12px;color:var(--muted);margin-top:6px}
+
+    .bio{margin-top:6px;margin-bottom:10px;font-size:15px;color:var(--muted);min-height:28px}
+    .typewriter{display:inline;font-family:Poppins, system-ui, sans-serif;font-weight:400;font-size:15px;color:var(--accent)}
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 18px;
+      background: var(--accent);
+      vertical-align: middle;
+      margin-left: 4px;
+      border-radius: 1px;
+      box-shadow: 0 0 6px rgba(233,238,246,0.6);
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .player{background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.03);display:flex;gap:18px;align-items:center}
+    .cover{width:80px;height:80px;border-radius:10px;background:#121212;border:1px solid rgba(255,255,255,0.03);overflow:hidden;display:grid;place-items:center;flex-shrink:0}
+    .cover img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block}
+
+    .player-body{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+    .meta{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;min-width:0;overflow:hidden}
+    .track{font-weight:600;font-size:15px;line-height:1.2;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+    .artist{font-size:12px;color:var(--muted);line-height:1.2;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+
+    .controls{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .buttons{display:flex;align-items:center;gap:8px}
+    .btn{width:36px;height:36px;border-radius:8px;border:0;background:transparent;display:inline-grid;place-items:center;cursor:pointer;opacity:0.95;font-size:16px;color:var(--accent);transition:background 0.15s, transform 0.06s, opacity 0.12s}
+    .btn:hover{background:rgba(255,255,255,0.02);opacity:1}
+    .btn:active{transform:translateY(1px)}
+    .btn:disabled{opacity:0.35;cursor:not-allowed}
+
+    .timebar{display:flex;align-items:center;gap:8px;min-width:0}
+    input[type=range]{-webkit-appearance:none;background:transparent;width:100%;position:relative;top:1px}
+    input[type=range]::-webkit-slider-runnable-track{height:6px;background:linear-gradient(90deg,#2b2b2b,#393939);border-radius:6px}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;margin-top:-3px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(255,255,255,0.03)}
+
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin-top:12px;text-align:right;color:var(--muted);font-size:11px}
+
+    .icon{width:18px;height:18px;display:block;fill:currentColor;pointer-events:none}
+
+    @media (max-width:520px){.card{padding:16px}.cover{width:60px;height:60px}.name{font-size:22px}.btn{width:32px;height:32px;font-size:14px}}
+  </style>
+</head>
+<body>
+  <div class="snowflakes" id="snowflakes"></div>
+
+  <div class="wrap">
+    <main class="card" id="card">
+      <div class="header">
+        <div class="avatar"><img src="avatar.png" alt="avatar"></div>
+        <div class="name-wrap">
+          <div class="name">emre</div>
+          <div class="role">discord - @dnd242</div>
+        </div>
+      </div>
+
+      <div class="bio"><span class="typewriter" id="typewriter"></span><span class="cursor" id="cursor"></span></div>
+
+      <div class="player">
+        <div class="cover"><img id="cover-img" src="cover.png" alt="cover"></div>
+        <div class="player-body">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="meta">
+              <div class="track" id="track-title" title="yurrr">yurrr</div>
+              <div class="artist" id="track-artist" title="ksuuvi, elibansss">ksuuvi, elibansss</div>
+            </div>
+            <div style="width:36px"></div>
+          </div>
+
+          <div class="controls">
+            <div class="buttons">
+              <button class="btn" id="prev" title="Previous">⏮</button>
+              <button class="btn" id="play" title="Play/Pause">▶</button>
+              <button class="btn" id="next" title="Next">⏭</button>
+              <div style="flex:1"></div>
+              <button class="btn" id="mute" title="Mute/Unmute" aria-pressed="false" aria-label="Mute toggle">
+                <svg class="icon" viewBox="0 0 24 24" id="mute-icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="timebar">
+              <span class="small" id="curTime">0:00</span>
+              <input type="range" id="seek" min="0" max="100" value="0">
+              <span class="small" id="dur">0:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <audio id="audio" preload="metadata">
+        <source id="audiosrc" src="song.mp3" type="audio/mpeg">
+        Your browser doesn't support audio.
+      </audio>
+    </main>
+  </div>
+
+  <script>
+    // Fade in card
+    requestAnimationFrame(()=>document.getElementById('card').classList.add('show'));
+
+    // Typewriter text in body
+    (function(){
+      const el = document.getElementById('typewriter');
+      const text = 'i love my girlfriend';
+      const typeSpeed = 70; const delSpeed = 40; const pause = 1500;
+      let i = 0, forward = true;
+      function loop(){
+        if(forward){
+          i++;
+          el.textContent = text.slice(0,i);
+          if(i >= text.length){ forward = false; setTimeout(loop, pause); return; }
+          setTimeout(loop, typeSpeed + Math.random()*40);
+        } else {
+          i--;
+          el.textContent = text.slice(0,i);
+          if(i <= 0){ forward = true; setTimeout(loop, 700); return; }
+          setTimeout(loop, delSpeed);
+        }
+      }
+      setTimeout(loop, 400);
+    })();
+
+    // Animated title typewriter (smooth)
+    (function(){
+      const full = 'emre';
+      let i = 0, forward = true;
+      function update(){
+        document.title = full.slice(0, i) + '';
+        if(forward){
+          if(i < full.length){ i++; setTimeout(update, 180); }
+          else { forward = false; setTimeout(update, 1500); }
+        } else {
+          if(i > 0){ i--; setTimeout(update, 100); }
+          else { forward = true; setTimeout(update, 800); }
+        }
+      }
+      update();
+    })();
+
+    // Snowflake generator - random spawn slow drift
+    (function(){
+      const container = document.getElementById('snowflakes');
+      const count = 150;
+      for(let i=0;i<count;i++){
+        const flake = document.createElement('div');
+        flake.className = 'flake';
+        flake.style.left = Math.random()*100 + 'vw';
+        flake.style.top = Math.random()*100 + 'vh';
+        flake.style.animationDuration = 60 + Math.random()*60 + 's';
+        flake.style.animationDelay = Math.random()*20 + 's';
+        flake.style.setProperty('--x-shift', (Math.random()*50-25)+'px');
+        flake.style.setProperty('--y-shift', (Math.random()*100-50)+'px');
+        container.appendChild(flake);
+      }
+    })();
+  </script>
+</body>
+</html>
