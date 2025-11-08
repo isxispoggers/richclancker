@@ -18,7 +18,6 @@
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);font-family:Poppins, Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;color:var(--accent);-webkit-font-smoothing:antialiased;overflow:hidden}
 
-    /* Tiny slow snow */
     .snowflakes {
       position: fixed;
       inset: 0;
@@ -165,65 +164,173 @@
     </main>
   </div>
 
-  <script>
-    // Fade in card
-    requestAnimationFrame(()=>document.getElementById('card').classList.add('show'));
+<script>
+  requestAnimationFrame(() => document.getElementById('card').classList.add('show'));
 
-    // Typewriter text in body
-    (function(){
-      const el = document.getElementById('typewriter');
-      const text = 'i love my girlfriend';
-      const typeSpeed = 70; const delSpeed = 40; const pause = 1500;
-      let i = 0, forward = true;
-      function loop(){
-        if(forward){
-          i++;
-          el.textContent = text.slice(0,i);
-          if(i >= text.length){ forward = false; setTimeout(loop, pause); return; }
-          setTimeout(loop, typeSpeed + Math.random()*40);
+  (function() {
+    const el = document.getElementById('typewriter');
+    const text = 'i love my girlfriend';
+    const typeSpeed = 70, delSpeed = 40, pause = 1500;
+    let i = 0, forward = true;
+    function loop() {
+      if (forward) {
+        i++;
+        el.textContent = text.slice(0, i);
+        if (i >= text.length) { forward = false; setTimeout(loop, pause); return; }
+        setTimeout(loop, typeSpeed + Math.random() * 40);
+      } else {
+        i--;
+        el.textContent = text.slice(0, i);
+        if (i <= 0) { forward = true; setTimeout(loop, 700); return; }
+        setTimeout(loop, delSpeed);
+      }
+    }
+    setTimeout(loop, 400);
+  })();
+
+  (function() {
+    const full = 'emre';
+    let i = 0, forward = true;
+    function update() {
+      document.title = full.slice(0, i) + '';
+      if (forward) {
+        if (i < full.length) { i++; setTimeout(update, 180); }
+        else { forward = false; setTimeout(update, 1500); }
+      } else {
+        if (i > 0) { i--; setTimeout(update, 100); }
+        else { forward = true; setTimeout(update, 800); }
+      }
+    }
+    update();
+  })();
+
+  (function() {
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('play');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const seek = document.getElementById('seek');
+    const curTime = document.getElementById('curTime');
+    const dur = document.getElementById('dur');
+    const mute = document.getElementById('mute');
+    const muteIcon = document.getElementById('mute-icon');
+    const titleEl = document.getElementById('track-title');
+    const artistEl = document.getElementById('track-artist');
+    const coverImg = document.getElementById('cover-img');
+
+    let playlist = [{
+      src: 'song.mp3',
+      title: titleEl.textContent || 'yurrr',
+      artist: artistEl.textContent || 'ksuuvi, elibansss',
+      cover: 'cover.png'
+    }];
+    let idx = 0;
+
+    function loadTrack(n) {
+      const t = playlist[n];
+      document.getElementById('audiosrc').src = t.src;
+      audio.load();
+      titleEl.textContent = t.title;
+      artistEl.textContent = t.artist;
+      coverImg.src = t.cover;
+    }
+
+    function setPlay(playing) {
+      playBtn.textContent = playing ? '⏸' : '▶';
+    }
+
+    playBtn.addEventListener('click', async () => {
+      try {
+        if (audio.paused) {
+          await audio.play();
         } else {
-          i--;
-          el.textContent = text.slice(0,i);
-          if(i <= 0){ forward = true; setTimeout(loop, 700); return; }
-          setTimeout(loop, delSpeed);
+          audio.pause();
         }
+      } catch (err) {
+        console.warn('Playback error:', err);
       }
-      setTimeout(loop, 400);
-    })();
+    });
 
-    // Animated title typewriter (smooth)
-    (function(){
-      const full = 'emre';
-      let i = 0, forward = true;
-      function update(){
-        document.title = full.slice(0, i) + '';
-        if(forward){
-          if(i < full.length){ i++; setTimeout(update, 180); }
-          else { forward = false; setTimeout(update, 1500); }
-        } else {
-          if(i > 0){ i--; setTimeout(update, 100); }
-          else { forward = true; setTimeout(update, 800); }
-        }
-      }
-      update();
-    })();
+    prevBtn.addEventListener('click', () => { audio.currentTime = 0; });
+    nextBtn.addEventListener('click', () => { audio.currentTime = 0; });
 
-    // Snowflake generator - random spawn slow drift
-    (function(){
-      const container = document.getElementById('snowflakes');
-      const count = 150;
-      for(let i=0;i<count;i++){
-        const flake = document.createElement('div');
-        flake.className = 'flake';
-        flake.style.left = Math.random()*100 + 'vw';
-        flake.style.top = Math.random()*100 + 'vh';
-        flake.style.animationDuration = 60 + Math.random()*60 + 's';
-        flake.style.animationDelay = Math.random()*20 + 's';
-        flake.style.setProperty('--x-shift', (Math.random()*50-25)+'px');
-        flake.style.setProperty('--y-shift', (Math.random()*100-50)+'px');
-        container.appendChild(flake);
+    audio.addEventListener('play', () => setPlay(true));
+    audio.addEventListener('pause', () => setPlay(false));
+
+    audio.addEventListener('loadedmetadata', () => {
+      seek.max = Math.floor(audio.duration);
+      dur.textContent = format(audio.duration);
+      seek.disabled = false;
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      seek.value = Math.floor(audio.currentTime);
+      curTime.textContent = format(audio.currentTime);
+    });
+
+    seek.addEventListener('input', () => {
+      audio.currentTime = seek.value;
+    });
+
+    audio.volume = 0.5;
+    function updateMuteIcon() {
+      if (audio.muted || audio.volume === 0) {
+        muteIcon.innerHTML = '<path d="M16.5 12l4.5 4.5-1.5 1.5L15 13.5 9 19.5H6V4.5h3L15 10.5l4.5-4.5L21 7.5 16.5 12z"></path>';
+        mute.setAttribute('aria-pressed', 'true');
+      } else {
+        muteIcon.innerHTML = '<path d="M3 10v4h4l5 5V5L7 10H3z"></path><path d="M16.5 8.5c.9.9 1.5 2.1 1.5 3.5s-.6 2.6-1.5 3.5l1.4 1.4c1.2-1.2 2.1-2.9 2.1-4.9s-.9-3.7-2.1-4.9L16.5 8.5zM14 6.1v2.2c1.9.5 3.3 2.3 3.3 4.7s-1.4 4.2-3.3 4.7v2.2c3-.6 5.3-3.6 5.3-6.9s-2.3-6.3-5.3-6.9z"></path>';
+        mute.setAttribute('aria-pressed', 'false');
       }
-    })();
-  </script>
+    }
+
+    mute.addEventListener('click', () => {
+      audio.muted = !audio.muted;
+      updateMuteIcon();
+    });
+
+    updateMuteIcon();
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        if (audio.paused) audio.play();
+        else audio.pause();
+      }
+    });
+
+    audio.addEventListener('error', () => {
+      seek.disabled = true;
+      playBtn.disabled = true;
+      playBtn.title = 'audio not found';
+      curTime.textContent = '0:00';
+      dur.textContent = '0:00';
+    });
+
+    function format(t) {
+      if (isNaN(t)) return '0:00';
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60);
+      return m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    loadTrack(idx);
+  })();
+
+  (function() {
+    const container = document.getElementById('snowflakes');
+    const count = 150;
+    for (let i = 0; i < count; i++) {
+      const flake = document.createElement('div');
+      flake.className = 'flake';
+      flake.style.left = Math.random() * 100 + 'vw';
+      flake.style.top = Math.random() * 100 + 'vh';
+      flake.style.animationDuration = 60 + Math.random() * 60 + 's';
+      flake.style.animationDelay = Math.random() * 20 + 's';
+      flake.style.setProperty('--x-shift', (Math.random() * 50 - 25) + 'px');
+      flake.style.setProperty('--y-shift', (Math.random() * 100 - 50) + 'px');
+      container.appendChild(flake);
+    }
+  })();
+</script>
 </body>
 </html>
